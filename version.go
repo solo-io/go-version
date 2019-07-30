@@ -12,20 +12,13 @@ import (
 // The compiled regular expression used to test the validity of a version.
 var (
 	versionRegexp *regexp.Regexp
-	semverRegexp  *regexp.Regexp
 )
 
 // The raw regular expression string used for testing the validity
 // of a version.
 const (
-	VersionRegexpRaw string = `v?([0-9]+(\.[0-9]+)*?)` +
+	VersionRegexpRaw string = `[A-Za-z\-~]*?([0-9]+(\.[0-9]+)*?)` +
 		`(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-?([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
-		`(\+([0-9A-Za-z\-~]+(\.[0-9A-Za-z\-~]+)*))?` +
-		`?`
-
-	// SemverRegexpRaw requires a separator between version and prerelease
-	SemverRegexpRaw string = `v?([0-9]+(\.[0-9]+)*?)` +
-		`(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
 		`(\+([0-9A-Za-z\-~]+(\.[0-9A-Za-z\-~]+)*))?` +
 		`?`
 )
@@ -41,20 +34,12 @@ type Version struct {
 
 func init() {
 	versionRegexp = regexp.MustCompile("^" + VersionRegexpRaw + "$")
-	semverRegexp = regexp.MustCompile("^" + SemverRegexpRaw + "$")
 }
 
 // NewVersion parses the given version and returns a new
 // Version.
 func NewVersion(v string) (*Version, error) {
 	return newVersion(v, versionRegexp)
-}
-
-// NewSemver parses the given version and returns a new
-// Version that adheres strictly to SemVer specs
-// https://semver.org/
-func NewSemver(v string) (*Version, error) {
-	return newVersion(v, semverRegexp)
 }
 
 func newVersion(v string, pattern *regexp.Regexp) (*Version, error) {
@@ -74,13 +59,6 @@ func newVersion(v string, pattern *regexp.Regexp) (*Version, error) {
 
 		segments[i] = int64(val)
 		si++
-	}
-
-	// Even though we could support more than three segments, if we
-	// got less than three, pad it with 0s. This is to cover the basic
-	// default usecase of semver, which is MAJOR.MINOR.PATCH at the minimum
-	for i := len(segments); i < 3; i++ {
-		segments = append(segments, 0)
 	}
 
 	pre := matches[7]
